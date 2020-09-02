@@ -3,7 +3,9 @@
     :disabled="!valid"
     title="Login"
     agree-text="Login"
+    cancel-text="Sign up"
     @agree="tryLogin"
+    @cancel="signUp"
   >
     <template #content>
       <v-form
@@ -86,6 +88,9 @@ export default {
             this.showError = true
           })
       }
+    },
+    signUp() {
+      this.$router.push('/signup')
     }
   }
 }

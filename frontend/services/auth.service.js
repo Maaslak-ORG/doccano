@@ -9,6 +9,11 @@ class AuthService {
     this.request.removeHeader()
     return this.request.post('/auth-token', data)
   }
+
+  postRegister(data) {
+    this.request.removeHeader()
+    return this.request.post('/register', data)
+  }
 }
 
 export default new AuthService()

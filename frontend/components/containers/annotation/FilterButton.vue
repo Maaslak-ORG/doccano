@@ -43,8 +43,8 @@
 export default {
   props: {
     value: {
-      type: String,
-      default: '',
+      type: Object,
+      default: () => ({}),
       required: true
     }
   },
@@ -62,11 +62,11 @@ export default {
   computed: {
     selected: {
       get() {
-        const index = this.items.findIndex(item => item.param === this.value)
+        const index = this.items.findIndex(item => item.param === this.value.isChecked)
         return index === -1 ? 0 : index
       },
       set(value) {
-        this.$emit('input', this.items[value].param)
+        this.$emit('input', { isChecked: this.items[value].param })
       }
     }
   }

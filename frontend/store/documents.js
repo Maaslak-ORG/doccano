@@ -12,7 +12,9 @@ export const state = () => ({
     offset: 0,
     q: '',
     isChecked: '',
-    filterName: ''
+    filterName: '',
+    filterLabelName: '',
+    selectedLabelId: ''
   }
 })
 

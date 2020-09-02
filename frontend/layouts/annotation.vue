@@ -27,7 +27,7 @@
           no-gutters
           class="d-none d-sm-flex"
         >
-          <v-col>
+          <v-col cols="auto">
             <approve-button
               v-if="canViewApproveButton"
               :approved="approved"
@@ -37,6 +37,9 @@
               v-model="filterOption"
             />
             <guideline-button />
+          </v-col>
+          <v-col align-self="start">
+            <search-field />
           </v-col>
           <v-spacer />
           <v-col>
@@ -51,10 +54,19 @@
             <nuxt />
           </v-col>
           <v-col cols="12" md="3">
-            <metadata-box
-              v-if="currentDoc && !loading"
-              :metadata="JSON.parse(currentDoc.meta)"
-            />
+            <v-row>
+              <v-col>
+                <label-box :items="items" />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <metadata-box
+                  v-if="currentDoc && !loading"
+                  :metadata="JSON.parse(currentDoc.meta)"
+                />
+              </v-col>
+            </v-row>
           </v-col>
         </v-row>
       </v-container>
@@ -74,7 +86,9 @@ import BottomNavigator from '@/components/containers/annotation/BottomNavigator'
 import GuidelineButton from '@/components/containers/annotation/GuidelineButton'
 import MetadataBox from '@/components/organisms/annotation/MetadataBox'
 import FilterButton from '@/components/containers/annotation/FilterButton'
+import SearchField from '@/components/containers/annotation/SearchField'
 import ApproveButton from '@/components/containers/annotation/ApproveButton'
+import LabelBox from '../components/containers/annotation/LabelBox'
 import Pagination from '~/components/containers/annotation/Pagination'
 import TheHeader from '~/components/organisms/layout/TheHeader'
 import TheSideBar from '~/components/organisms/layout/TheSideBar'
@@ -83,6 +97,8 @@ export default {
   middleware: ['check-auth', 'auth', 'set-project'],
 
   components: {
+    LabelBox,
+    SearchField,
     TheSideBar,
     TheHeader,
     BottomNavigator,
@@ -99,7 +115,7 @@ export default {
       limit: this.limit,
       offset: this.offset,
       q: this.$route.query.q,
-      isChecked: this.filterOption,
+      ...this.filterOption,
       filterName: this.getFilterOption
     })
   },
@@ -115,6 +131,7 @@ export default {
     ...mapGetters('projects', ['getLink', 'getCurrentUserRole', 'getFilterOption', 'canViewApproveButton']),
     ...mapState('documents', ['loading', 'total']),
     ...mapGetters('documents', ['currentDoc', 'approved']),
+    ...mapState('labels', ['items']),
     page: {
       get() {
         return parseInt(this.$route.query.page, 10)
@@ -131,12 +148,13 @@ export default {
     },
     filterOption: {
       get() {
-        return this.$route.query.isChecked
+        return { isChecked: this.$route.query.isChecked }
       },
       set(value) {
+        console.log(value)
         this.$router.push({
           query: {
-            isChecked: value,
+            ...value,
             page: 1,
             q: this.$route.query.q
           }
@@ -155,7 +173,7 @@ export default {
       return JSON.stringify({
         page: this.page,
         q: this.$route.query.q,
-        isChecked: this.filterOption
+        ...this.filterOption
       })
     }
   },

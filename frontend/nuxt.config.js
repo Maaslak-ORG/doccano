@@ -49,7 +49,8 @@ export default {
   plugins: [
     '~/plugins/filters.js',
     '~/plugins/vue-youtube.js',
-    '~/plugins/vue-shortkey.js'
+    '~/plugins/vue-shortkey.js',
+    { src: '~/plugins/vue-notification.js', ssr: false }
   ],
   /*
   ** Nuxt.js modules
