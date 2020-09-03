@@ -4,6 +4,7 @@
     :headers="headers"
     hide-default-footer
     hide-default-header
+    disable-pagination
     class="elevation-1"
     caption="Labels cheat sheet"
   >
