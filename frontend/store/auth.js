@@ -32,6 +32,9 @@ export const getters = {
 }
 
 export const actions = {
+  signUp({ commit }, authData) {
+    return AuthService.postRegister(authData)
+  },
   authenticateUser({ commit }, authData) {
     return AuthService.postCredential(authData)
       .then((result) => {

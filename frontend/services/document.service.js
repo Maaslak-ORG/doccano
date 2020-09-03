@@ -5,8 +5,8 @@ class DocumentService {
     this.request = ApiService
   }
 
-  getDocumentList({ projectId, limit = 10, offset = 0, q = '', isChecked = '', filterName = '' }) {
-    return this.request.get(`/projects/${projectId}/docs?limit=${limit}&offset=${offset}&q=${q}&${filterName}=${isChecked}`)
+  getDocumentList({ projectId, limit = 10, offset = 0, q = '', isChecked = '', filterName = '', filterLabelName = '', selectedLabelId = '' }) {
+    return this.request.get(`/projects/${projectId}/docs?limit=${limit}&offset=${offset}&q=${q}&${filterName}=${isChecked}&${filterLabelName}=${selectedLabelId}`)
   }
 
   addDocument(projectId, payload) {

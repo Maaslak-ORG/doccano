@@ -11,7 +11,8 @@ from libcloud.base import DriverType, get_driver
 from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
 from rest_framework import generics, filters, status
 from rest_framework.exceptions import ParseError, ValidationError
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.generics import CreateAPIView
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser
@@ -20,7 +21,7 @@ from rest_framework_csv.renderers import CSVRenderer
 from .filters import DocumentFilter
 from .models import Project, Label, Document, RoleMapping, Role
 from .permissions import IsProjectAdmin, IsAnnotatorAndReadOnly, IsAnnotator, IsAnnotationApproverAndReadOnly, IsOwnAnnotation, IsAnnotationApprover
-from .serializers import ProjectSerializer, LabelSerializer, DocumentSerializer, UserSerializer, ApproverSerializer
+from .serializers import ProjectSerializer, RegisterSerializer, LabelSerializer, DocumentSerializer, UserSerializer, ApproverSerializer
 from .serializers import ProjectPolymorphicSerializer, RoleMappingSerializer, RoleSerializer
 from .utils import CSVParser, ExcelParser, JSONParser, PlainTextParser, CoNLLParser, AudioParser, iterable_to_io
 from .utils import JSONLRenderer
@@ -387,6 +388,15 @@ class Users(APIView):
         queryset = User.objects.all()
         serialized_data = UserSerializer(queryset, many=True).data
         return Response(serialized_data)
+
+
+class RegisterView(CreateAPIView):
+    model = User
+    serializer_class = RegisterSerializer
+    permission_classes = [
+        AllowAny  # Or anon users can't register
+    ]
+    queryset = User.objects.all()
 
 
 class Roles(generics.ListCreateAPIView):

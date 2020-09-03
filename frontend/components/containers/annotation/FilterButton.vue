@@ -20,8 +20,11 @@
     <v-list>
       <v-list-item-group v-model="selected" mandatory>
         <v-list-item
-          v-for="(item, i) in items"
+          v-for="(item, i) in itemsAll"
           :key="i"
+          :style="item.background_color ? {
+            'color': item.background_color.concat(' !important')
+          } : {}"
         >
           <v-list-item-icon>
             <v-icon v-if="selected === i">
@@ -30,7 +33,7 @@
           </v-list-item-icon>
           <v-list-item-content>
             <v-list-item-title>
-              {{ item.title }}
+              {{ item.text }}
             </v-list-item-title>
           </v-list-item-content>
         </v-list-item>
@@ -44,29 +47,36 @@ export default {
   props: {
     value: {
       type: String,
-      default: '',
+      default: '{}',
+      required: true
+    },
+    items: {
+      type: Array,
+      default: () => ([]),
       required: true
     }
   },
 
-  data() {
-    return {
-      items: [
-        { title: 'All', param: '' },
-        { title: 'Done', param: 'false' },
-        { title: 'Undone', param: 'true' }
-      ]
-    }
-  },
-
   computed: {
+    itemsAll() {
+      const CONST_ITEMS = [
+        { text: 'All', isChecked: '', id: '' },
+        { text: 'Done', isChecked: 'false', id: '' },
+        { text: 'Undone', isChecked: 'true', id: '' }
+      ]
+      this.items.forEach((item) => {
+        item.isChecked = 'false'
+      })
+      return CONST_ITEMS.concat(this.items)
+    },
     selected: {
       get() {
-        const index = this.items.findIndex(item => item.param === this.value)
+        const ParsedValue = JSON.parse(this.value)
+        const index = this.itemsAll.findIndex(item => (item.isChecked === ParsedValue.isChecked && item.id === ParsedValue.selectedLabelId))
         return index === -1 ? 0 : index
       },
       set(value) {
-        this.$emit('input', this.items[value].param)
+        this.$emit('input', JSON.stringify({ isChecked: this.itemsAll[value].isChecked, selectedLabelId: this.itemsAll[value].id }))
       }
     }
   }

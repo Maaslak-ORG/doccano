@@ -3,6 +3,8 @@
     <the-header />
     <nuxt />
     <the-footer />
+    <notifications group="top" position="top center" />
+    <notifications group="default" position="right bottom" />
   </v-app>
 </template>
 
