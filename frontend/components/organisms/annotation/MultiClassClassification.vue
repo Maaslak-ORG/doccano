@@ -18,8 +18,22 @@
         @click="select"
         @click:close="remove(item.id)"
       >
-        {{ item.text }}
+        <strong> {{ item.text }} </strong>&nbsp;
+        <span> {{ item.suffix_key }} </span>
       </v-chip>
+    </template>
+    <template v-slot:item="{ parent, item, on, attrs }">
+      <v-list-item
+        v-bind="attrs"
+        v-on="on"
+      >
+        <v-list-item-content>
+          <v-list-item-title>
+            <strong>{{ item.text }}</strong>&nbsp;
+            <span>{{ item.suffix_key }}</span>
+          </v-list-item-title>
+        </v-list-item-content>
+      </v-list-item>
     </template>
   </v-combobox>
 </template>

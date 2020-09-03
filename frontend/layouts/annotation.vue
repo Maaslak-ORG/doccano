@@ -35,11 +35,12 @@
             />
             <filter-button
               v-model="filterOption"
+              :items="items"
             />
             <guideline-button />
           </v-col>
           <v-col align-self="start">
-            <search-field />
+            <search-field v-model="filterOption" />
           </v-col>
           <v-spacer />
           <v-col>
@@ -114,9 +115,9 @@ export default {
       projectId: this.$route.params.id,
       limit: this.limit,
       offset: this.offset,
-      q: this.$route.query.q,
-      ...this.filterOption,
-      filterName: this.getFilterOption
+      ...JSON.parse(this.filterOption),
+      filterName: this.getFilterOption,
+      filterLabelName: this.getFilterLabelOption
     })
   },
 
@@ -128,7 +129,7 @@ export default {
   },
 
   computed: {
-    ...mapGetters('projects', ['getLink', 'getCurrentUserRole', 'getFilterOption', 'canViewApproveButton']),
+    ...mapGetters('projects', ['getLink', 'getCurrentUserRole', 'getFilterOption', 'getFilterLabelOption', 'canViewApproveButton']),
     ...mapState('documents', ['loading', 'total']),
     ...mapGetters('documents', ['currentDoc', 'approved']),
     ...mapState('labels', ['items']),
@@ -140,6 +141,7 @@ export default {
         this.$router.push({
           query: {
             isChecked: this.$route.query.isChecked,
+            selectedLabelId: this.$route.query.selectedLabelId,
             page: parseInt(value, 10),
             q: this.$route.query.q
           }
@@ -148,15 +150,14 @@ export default {
     },
     filterOption: {
       get() {
-        return { isChecked: this.$route.query.isChecked }
+        return JSON.stringify({ isChecked: this.$route.query.isChecked, q: this.$route.query.q, selectedLabelId: this.$route.query.selectedLabelId })
       },
       set(value) {
-        console.log(value)
         this.$router.push({
           query: {
-            ...value,
-            page: 1,
-            q: this.$route.query.q
+            ...JSON.parse(this.filterOption),
+            ...JSON.parse(value),
+            page: 1
           }
         })
       }
@@ -173,7 +174,7 @@ export default {
       return JSON.stringify({
         page: this.page,
         q: this.$route.query.q,
-        ...this.filterOption
+        ...JSON.parse(this.filterOption)
       })
     }
   },
