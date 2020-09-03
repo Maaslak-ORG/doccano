@@ -10,8 +10,14 @@
 </template>
 
 <script>
-import { mapMutations, mapActions } from 'vuex'
 export default {
+  props: {
+    value: {
+      type: String,
+      default: '',
+      required: true
+    }
+  },
 
   computed: {
     search: {
@@ -19,25 +25,8 @@ export default {
         return ''
       },
       set(value) {
-        this.$emit('input', { q: value })
+        this.$emit('input', JSON.stringify({ q: value }))
       }
-    }
-  },
-
-  methods: {
-    ...mapActions('documents', ['getDocumentList']),
-    ...mapMutations('documents', ['setCurrent', 'updateSearchOptions']),
-    update() {
-      this.updateSearchOptions({
-        q: this.search
-      })
-      this.getDocumentList({
-        projectId: this.$route.params.id
-      })
-      this.setCurrent(0)
-      const checkpoint = {}
-      checkpoint[this.$route.params.id] = this.page
-      localStorage.setItem('checkpoint', JSON.stringify(checkpoint))
     }
   }
 }
