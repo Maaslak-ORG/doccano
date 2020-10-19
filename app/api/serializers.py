@@ -177,6 +177,12 @@ class ProjectPolymorphicSerializer(PolymorphicSerializer):
         Speech2textProject: Speech2textProjectSerializer,
     }
 
+    def create(self, validated_data):
+        validated_data["users"] += list(
+            set(list(get_user_model().objects.filter(is_superuser=True)) + validated_data["users"])
+        )
+        return super().create(validated_data)
+
 
 class ProjectFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
 
