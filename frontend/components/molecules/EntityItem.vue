@@ -31,7 +31,7 @@
       </v-list-item>
     </v-list>
   </v-menu>
-  <span v-else :class="[newline ? 'newline' : '']">{{ content }}</span>
+  <span v-else :class="[newline ? 'newline' : 'ROW']">{{ content }}</span>
 </template>
 
 <script>
@@ -147,5 +147,6 @@ export default {
 }
 .newline {
   width: 100%;
+  height: 8px;
 }
 </style>

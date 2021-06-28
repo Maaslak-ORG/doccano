@@ -32,22 +32,10 @@ class SignupView(TemplateView):
 
         if form.is_valid():
             user = form.save(commit=False)
-            user.is_active = False
+            user.is_active = True
             user.save()
             current_site = get_current_site(request)
-            mail_subject = 'Activate your account.'
-            message = render_to_string('acc_active_email.html', {
-                'user': user,
-                'domain': current_site.domain,
-                'scheme': request.scheme,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)).decode(),
-                'token': account_activation_token.make_token(user),
-            })
-            to_email = form.cleaned_data.get('email')
-            email = EmailMessage(
-                mail_subject, message, to=[to_email]
-            )
-            email.send()
-            return render(request, 'validate_mail_address_complete.html')
+            return redirect('login')
+#            return render(request, 'validate_mail_address_complete.html')
         else:
             return render(request, self.template_name, {'form': form, 'allow_signup': bool(settings.ALLOW_SIGNUP)})

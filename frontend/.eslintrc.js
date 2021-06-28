@@ -14,6 +14,7 @@ module.exports = {
   // add your custom rules here
   rules: {
     'no-console': 'off',
+    'vue/comment-directive': 'off',
     'no-restricted-syntax': [
       'error',
       {

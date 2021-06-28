@@ -33,6 +33,15 @@ export const getters = {
       return ''
     }
   },
+  getFilterLabelOption(state) {
+    if (state.current.project_type === 'DocumentClassification') {
+      return 'doc_annotations__label__id'
+    } else if (state.current.project_type === 'SequenceLabeling') {
+      return 'seq_annotations__label__id'
+    } else {
+      return ''
+    }
+  },
   getLink(state) {
     if (state.current.project_type === 'DocumentClassification') {
       return 'text-classification'

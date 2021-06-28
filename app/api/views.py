@@ -1,34 +1,52 @@
 import collections
 import json
+
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import Count, F, Q
 from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404, redirect
+from django.utils.decorators import method_decorator
+from django.views.decorators.debug import sensitive_post_parameters
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import Count, F, Q
 from libcloud.base import DriverType, get_driver
-from libcloud.storage.types import ContainerDoesNotExistError, ObjectDoesNotExistError
-from rest_framework import generics, filters, status
+from libcloud.storage.types import (ContainerDoesNotExistError,
+                                    ObjectDoesNotExistError)
+from rest_framework import filters, generics, status
 from rest_framework.exceptions import ParseError, ValidationError
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.generics import CreateAPIView
+from rest_framework.parsers import MultiPartParser
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly,
+                                        AllowAny)
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.parsers import MultiPartParser
 from rest_framework_csv.renderers import CSVRenderer
 
 from .filters import DocumentFilter
-from .models import Project, Label, Document, RoleMapping, Role
-from .permissions import IsProjectAdmin, IsAnnotatorAndReadOnly, IsAnnotator, IsAnnotationApproverAndReadOnly, IsOwnAnnotation, IsAnnotationApprover
-from .serializers import ProjectSerializer, LabelSerializer, DocumentSerializer, UserSerializer, ApproverSerializer
-from .serializers import ProjectPolymorphicSerializer, RoleMappingSerializer, RoleSerializer
-from .utils import CSVParser, ExcelParser, JSONParser, PlainTextParser, CoNLLParser, AudioParser, iterable_to_io
-from .utils import JSONLRenderer
-from .utils import JSONPainter, CSVPainter
+from .models import Document, Label, Project, Role, RoleMapping
+from .permissions import (IsAnnotationApprover,
+                          IsAnnotationApproverAndReadOnly, IsAnnotator,
+                          IsAnnotatorAndReadOnly, IsOwnAnnotation,
+                          IsProjectAdmin)
+from .serializers import (DocumentSerializer, LabelSerializer,
+                          ProjectPolymorphicSerializer, ProjectSerializer,
+                          RegisterSerializer,
+                          RoleMappingSerializer, RoleSerializer,
+                          UserSerializer)
+from .utils import (AudioParser, CoNLLParser, CSVPainter, CSVParser,
+                    ExcelParser, JSONLRenderer, JSONPainter, JSONParser,
+                    PlainTextParser, iterable_to_io)
 
 IsInProjectReadOnlyOrAdmin = (IsAnnotatorAndReadOnly | IsAnnotationApproverAndReadOnly | IsProjectAdmin)
 IsInProjectOrAdmin = (IsAnnotator | IsAnnotationApprover | IsProjectAdmin)
 
+sensitive_post_parameters_m = method_decorator(
+    sensitive_post_parameters(
+        'password', 'old_password', 'new_password1', 'new_password2'
+    )
+)
 
 class Health(APIView):
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -133,7 +151,7 @@ class ApproveLabelsAPI(APIView):
         document = get_object_or_404(Document, pk=self.kwargs['doc_id'])
         document.annotations_approved_by = self.request.user if approved else None
         document.save()
-        return Response(ApproverSerializer(document).data)
+        return Response(DocumentSerializer(document).data)
 
 
 class LabelList(generics.ListCreateAPIView):
@@ -235,15 +253,8 @@ class AnnotationList(generics.ListCreateAPIView):
 
 class AnnotationDetail(generics.RetrieveUpdateDestroyAPIView):
     lookup_url_kwarg = 'annotation_id'
+    permission_classes = [IsAuthenticated & (((IsAnnotator & IsOwnAnnotation) | IsAnnotationApprover)  | IsProjectAdmin)]
     swagger_schema = None
-
-    def get_permissions(self):
-        project = get_object_or_404(Project, pk=self.kwargs['project_id'])
-        if project.collaborative_annotation:
-            self.permission_classes = [IsAuthenticated & IsInProjectOrAdmin]
-        else:
-            self.permission_classes = [IsAuthenticated & IsInProjectOrAdmin & IsOwnAnnotation]
-        return super().get_permissions()
 
     def get_serializer_class(self):
         project = get_object_or_404(Project, pk=self.kwargs['project_id'])
@@ -387,6 +398,15 @@ class Users(APIView):
         queryset = User.objects.all()
         serialized_data = UserSerializer(queryset, many=True).data
         return Response(serialized_data)
+    
+
+class RegisterView(CreateAPIView):
+    model = User
+    serializer_class = RegisterSerializer
+    permission_classes = [
+        AllowAny  # Or anon users can't register
+    ]
+    queryset = User.objects.all()
 
 
 class Roles(generics.ListCreateAPIView):
