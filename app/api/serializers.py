@@ -1,10 +1,11 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model, password_validation
+from django.contrib.auth.validators import ASCIIUsernameValidator
+from django.utils.translation import ugettext_lazy as _
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 from rest_polymorphic.serializers import PolymorphicSerializer
 from rest_framework.exceptions import ValidationError
-
 
 from .models import Label, Project, Document, RoleMapping, Role
 from .models import TextClassificationProject, SequenceLabelingProject, Seq2seqProject, Speech2textProject
@@ -16,6 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ('id', 'username', 'first_name', 'last_name', 'email', 'is_superuser')
+
 
 class RegisterSerializer(serializers.ModelSerializer):
 
@@ -36,6 +38,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
 
         return user
+
 
 class LabelSerializer(serializers.ModelSerializer):
 
@@ -101,13 +104,6 @@ class DocumentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Document
         fields = ('id', 'text', 'annotations', 'meta', 'annotation_approver')
-
-
-class ApproverSerializer(DocumentSerializer):
-
-    class Meta:
-        model = Document
-        fields = ('id', 'annotation_approver')
 
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -176,7 +172,12 @@ class ProjectPolymorphicSerializer(PolymorphicSerializer):
         Seq2seqProject: Seq2seqProjectSerializer,
         Speech2textProject: Speech2textProjectSerializer,
     }
-
+    
+    def create(self, validated_data):
+        validated_data["users"] += list(
+            set(list(get_user_model().objects.filter(is_superuser=True)) + validated_data["users"])
+        )
+        return super().create(validated_data)
 
 class ProjectFilteredPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
 
