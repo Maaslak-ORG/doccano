@@ -27,16 +27,20 @@
           no-gutters
           class="d-none d-sm-flex"
         >
-          <v-col>
+          <v-col cols="auto">
             <approve-button
               v-if="canViewApproveButton"
               :approved="approved"
-              :disabled="currentDoc ? false : true"
+              :disabled="!currentDoc"
             />
             <filter-button
               v-model="filterOption"
+              :items="items"
             />
             <guideline-button />
+          </v-col>
+          <v-col align-self="start">
+            <search-field v-model="filterOption" />
           </v-col>
           <v-spacer />
           <v-col>
@@ -51,10 +55,19 @@
             <nuxt />
           </v-col>
           <v-col cols="12" md="3">
-            <metadata-box
-              v-if="currentDoc && !loading"
-              :metadata="JSON.parse(currentDoc.meta)"
-            />
+            <v-row>
+              <v-col>
+                <label-box :items="items" />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <metadata-box
+                  v-if="currentDoc && !loading"
+                  :metadata="JSON.parse(currentDoc.meta)"
+                />
+              </v-col>
+            </v-row>
           </v-col>
         </v-row>
       </v-container>
@@ -74,7 +87,9 @@ import BottomNavigator from '@/components/containers/annotation/BottomNavigator'
 import GuidelineButton from '@/components/containers/annotation/GuidelineButton'
 import MetadataBox from '@/components/organisms/annotation/MetadataBox'
 import FilterButton from '@/components/containers/annotation/FilterButton'
+import SearchField from '@/components/containers/annotation/SearchField'
 import ApproveButton from '@/components/containers/annotation/ApproveButton'
+import LabelBox from '../components/containers/annotation/LabelBox'
 import Pagination from '~/components/containers/annotation/Pagination'
 import TheHeader from '~/components/organisms/layout/TheHeader'
 import TheSideBar from '~/components/organisms/layout/TheSideBar'
@@ -83,6 +98,8 @@ export default {
   middleware: ['check-auth', 'auth', 'set-project'],
 
   components: {
+    LabelBox,
+    SearchField,
     TheSideBar,
     TheHeader,
     BottomNavigator,
@@ -98,9 +115,9 @@ export default {
       projectId: this.$route.params.id,
       limit: this.limit,
       offset: this.offset,
-      q: this.$route.query.q,
-      isChecked: this.filterOption,
-      filterName: this.getFilterOption
+      ...JSON.parse(this.filterOption),
+      filterName: this.getFilterOption,
+      filterLabelName: this.getFilterLabelOption
     })
   },
 
@@ -112,9 +129,10 @@ export default {
   },
 
   computed: {
-    ...mapGetters('projects', ['getLink', 'getCurrentUserRole', 'getFilterOption', 'canViewApproveButton']),
+    ...mapGetters('projects', ['getLink', 'getCurrentUserRole', 'getFilterOption', 'getFilterLabelOption', 'canViewApproveButton']),
     ...mapState('documents', ['loading', 'total']),
     ...mapGetters('documents', ['currentDoc', 'approved']),
+    ...mapState('labels', ['items']),
     page: {
       get() {
         return parseInt(this.$route.query.page, 10)
@@ -123,6 +141,7 @@ export default {
         this.$router.push({
           query: {
             isChecked: this.$route.query.isChecked,
+            selectedLabelId: this.$route.query.selectedLabelId,
             page: parseInt(value, 10),
             q: this.$route.query.q
           }
@@ -131,14 +150,14 @@ export default {
     },
     filterOption: {
       get() {
-        return this.$route.query.isChecked
+        return JSON.stringify({ isChecked: this.$route.query.isChecked, q: this.$route.query.q, selectedLabelId: this.$route.query.selectedLabelId })
       },
       set(value) {
         this.$router.push({
           query: {
-            isChecked: value,
-            page: 1,
-            q: this.$route.query.q
+            ...JSON.parse(this.filterOption),
+            ...JSON.parse(value),
+            page: 1
           }
         })
       }
@@ -155,7 +174,7 @@ export default {
       return JSON.stringify({
         page: this.page,
         q: this.$route.query.q,
-        isChecked: this.filterOption
+        ...JSON.parse(this.filterOption)
       })
     }
   },

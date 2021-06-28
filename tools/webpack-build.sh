@@ -3,16 +3,17 @@
 set -o errexit
 
 root="$(dirname "$0")/.."
-app="${root}/frontend"
+frontend="${root}/app/server/static"
 
 (
-  cd "${app}"
+  cd "${frontend}"
 
   if [[ ! -d node_modules/.bin ]]; then
     echo "Installing dependencies"
-    yarn install
+    npm install
   fi
-  echo "Starting frontend server"
-  yarn lintfix
-  yarn dev
+
+  echo "Starting webpack"
+  npm run build
 )
+

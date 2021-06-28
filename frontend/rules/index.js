@@ -39,8 +39,7 @@ export const fileFormatRules = [
 ]
 
 export const uploadFileRules = [
-  v => !!v || 'File is required',
-  v => !v || v.size < 1000000 || 'File size should be less than 1 MB!'
+  v => !!v || 'File is required'
 ]
 
 // Rules for user.

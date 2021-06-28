@@ -1,5 +1,5 @@
 <template>
-  <div class="highlight-container highlight-container--bottom-labels" @click="open" @touchend="open">
+  <div class="highlight-container highlight-container--bottom-labels" @click="open">
     <entity-item
       v-for="(chunk, i) in chunks"
       :key="i"
@@ -145,12 +145,14 @@ export default {
           newline: true
         })
       }
-      chunks.push({
-        label: null,
-        color: null,
-        text: snippets.slice(-1)[0],
-        newline: false
-      })
+      if (snippets.slice(-1)[0] !== '') {
+        chunks.push({
+          label: null,
+          color: null,
+          text: snippets.slice(-1)[0],
+          newline: false
+        })
+      }
       return chunks
     },
     show(e) {
@@ -175,11 +177,24 @@ export default {
         return
       }
       const range = selection.getRangeAt(0)
-      const preSelectionRange = range.cloneRange()
-      preSelectionRange.selectNodeContents(this.$el)
-      preSelectionRange.setEnd(range.startContainer, range.startOffset)
-      this.start = [...preSelectionRange.toString()].length
-      this.end = this.start + [...range.toString()].length
+      // Select full document to calculate proper indices
+      const docSelection = range.cloneRange()
+      docSelection.selectNodeContents(this.$el)
+      if (range.startOffset === range.endOffset) {
+        // Single click without selection -> Select full line
+        range.selectNodeContents(range.startContainer)
+        // Shift end to the end of the selected line
+        docSelection.setEnd(range.startContainer, [...range.toString()].length)
+        this.start = [...docSelection.toString()].length - [...range.toString()].length
+        this.end = [...docSelection.toString()].length
+        if (range.toString().endsWith('\n')) {
+          this.end -= 1
+        }
+      } else {
+        docSelection.setEnd(range.startContainer, range.startOffset)
+        this.start = [...docSelection.toString()].length
+        this.end = this.start + [...range.toString()].length
+      }
     },
     validateSpan() {
       if ((typeof this.start === 'undefined') || (typeof this.end === 'undefined')) {
@@ -233,4 +248,5 @@ export default {
 .highlight-container.highlight-container--bottom-labels .highlight.bottom {
   margin-top: 6px;
 }
+
 </style>

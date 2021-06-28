@@ -385,17 +385,14 @@ class ExcelParser(FileParser):
                 yield data
                 data = []
             # Only text column
-            if len(row) <= len(columns) and len(row) == 1:
+            if len(row) == len(columns) and len(row) == 1:
                 data.append({'text': row[0]})
             # Text, labels and metadata columns
-            elif 2 <= len(row) <= len(columns):
+            elif len(row) == len(columns) and len(row) >= 2:
                 datum = dict(zip(columns, row))
                 text, label = datum.pop('text'), datum.pop('label')
                 meta = FileParser.encode_metadata(datum)
-                if label != '':
-                    j = {'text': text, 'labels': [label], 'meta': meta}
-                else:
-                    j = {'text': text, 'meta': meta}
+                j = {'text': text, 'labels': [label], 'meta': meta}
                 data.append(j)
             else:
                 raise FileParseException(line_num=i, line=row)
