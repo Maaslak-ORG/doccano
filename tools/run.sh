@@ -2,14 +2,35 @@
 
 set -o errexit
 
-if [[ ! -d "app/staticfiles" ]]; then python app/manage.py collectstatic --noinput; fi
+root="$(dirname "$0")/.."
+app="${root}/app"
+venv="${root}/venv"
 
-python app/manage.py wait_for_db
-python app/manage.py migrate
-python app/manage.py create_roles
-
-if [[ -n "${ADMIN_USERNAME}" ]] && [[ -n "${ADMIN_EMAIL}" ]] && [[ -n "${ADMIN_PASSWORD}" ]]; then
-  python app/manage.py create_admin --noinput --username="${ADMIN_USERNAME}" --email="${ADMIN_EMAIL}" --password="${ADMIN_PASSWORD}"
+if [[ ! -f "${venv}/bin/python" ]]; then
+  echo "Creating virtualenv"
+  mkdir -p "${venv}"
+  python3 -m venv "${venv}"
+  "${venv}/bin/pip" install --upgrade pip setuptools
 fi
 
-gunicorn --bind="0.0.0.0:${PORT:-8000}" --workers="${WORKERS:-1}" --pythonpath=app app.wsgi --timeout 300
+echo "Pip version: ${pip --version}"
+
+echo "Installing dependencies"
+apt-get update && apt-get install -y g++ unixodbc-dev # pyodbc build dependencies
+"${venv}/bin/pip" install -r "${root}/requirements.txt"
+
+
+#if [[ ! -d "${app}/staticfiles" ]]; then "${venv}/bin/python" "${app}/manage.py" collectstatic --noinput; fi
+"${venv}/bin/python" "${app}/manage.py" collectstatic --noinput
+
+
+"${venv}/bin/python" "${app}/manage.py" wait_for_db
+"${venv}/bin/python" "${app}/manage.py" migrate
+"${venv}/bin/python" "${app}/manage.py" create_roles
+
+#if [[ -n "${ADMIN_USERNAME}" ]] && [[ -n "${ADMIN_EMAIL}" ]] && [[ -n "${ADMIN_PASSWORD}" ]]; then
+#  "${venv}/bin/python" "${app}/manage.py" create_admin --noinput --username="${ADMIN_USERNAME}" --email="${ADMIN_EMAIL}" --password="${ADMIN_PASSWORD}"
+#fi
+
+"${venv}/bin/gunicorn" --bind="0.0.0.0:${PORT:-8000}" --workers="${WORKERS:-1}" --pythonpath="${app}" app.wsgi --timeout 300
+

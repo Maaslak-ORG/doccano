@@ -6,13 +6,17 @@ services:
     volumes:
       - .:/src
       - venv:/src/venv
-    command: ["/src/tools/dev-django.sh", "0.0.0.0:8000"]
+    # command: ["/src/tools/dev-django.sh", "0.0.0.0:8000"]
+    command: ["/src/tools/run.sh"]
     environment:
       ADMIN_USERNAME: "admin"
       ADMIN_PASSWORD: "password"
       ADMIN_EMAIL: "admin@example.com"
       DATABASE_URL: "postgres://doccano:doccano@postgres:5432/doccano?sslmode=disable"
-      ALLOW_SIGNUP: "False" 
+      ALLOW_SIGNUP: "True" 
+      WORKERS: "4"
+      DEBUG: "False"
+      GOOGLE_TRACKING_ID: "None"
     ports:
       - 8000:8000
 
@@ -21,11 +25,14 @@ services:
     volumes:
       - .:/src
       - node_modules:/src/app/server/static/node_modules
-    command: ["/src/tools/dev-webpack.sh"]
+    # command: ["/src/tools/dev-webpack.sh"]
+    command: ["/src/tools/webpack-build.sh"]
     environment:
       WEBPACK_HOST: "0.0.0.0"
       WEBPACK_PORT: "8080"
-      WEBPACK_POLL_MILLIS: "1000"
+      WEBPACK_POLL_MILLIS: "5000"
+      HOT_RELOAD: "0"
+      DEBUG: "False"
     ports:
       - 8080:8080
 
@@ -35,6 +42,8 @@ services:
       POSTGRES_USER: "doccano"
       POSTGRES_PASSWORD: "doccano"
       POSTGRES_DB: "doccano"
+    volumes:
+      - db-data:/var/lib/postgresql/data
     ports:
       - 5432:5432
 

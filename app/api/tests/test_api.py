@@ -880,11 +880,9 @@ class TestAnnotationDetailAPI(APITestCase):
         another_entity = mommy.make('SequenceAnnotation',
                                     document=main_project_doc, user=another_project_member)
 
-        shared_project = mommy.make('SequenceLabelingProject',
-                                    collaborative_annotation=True,
-                                    users=[project_member, another_project_member])
-        shared_project_doc = mommy.make('Document', project=shared_project)
-        shared_entity = mommy.make('SequenceAnnotation', document=shared_project_doc, user=another_project_member)
+        sub_project = mommy.make('SequenceLabelingProject', users=[non_project_member])
+        sub_project_doc = mommy.make('Document', project=sub_project)
+        mommy.make('SequenceAnnotation', document=sub_project_doc)
 
         cls.url = reverse(viewname='annotation_detail', args=[main_project.id,
                                                               main_project_doc.id,
@@ -892,12 +890,9 @@ class TestAnnotationDetailAPI(APITestCase):
         cls.another_url = reverse(viewname='annotation_detail', args=[main_project.id,
                                                                       main_project_doc.id,
                                                                       another_entity.id])
-        cls.shared_url = reverse(viewname='annotation_detail', args=[shared_project.id,
-                                                                     shared_project_doc.id,
-                                                                     shared_entity.id])
         cls.post_data = {'start_offset': 0, 'end_offset': 10}
-        assign_user_to_role(project_member=project_member, project=main_project, role_name=settings.ROLE_ANNOTATOR)
-        assign_user_to_role(project_member=project_member, project=shared_project, role_name=settings.ROLE_ANNOTATOR)
+        assign_user_to_role(project_member=project_member, project=main_project,
+                            role_name=settings.ROLE_ANNOTATOR)
 
     def test_returns_annotation_to_project_member(self):
         self.client.login(username=self.project_member_name,
@@ -958,18 +953,6 @@ class TestAnnotationDetailAPI(APITestCase):
                           password=self.project_member_pass)
         response = self.client.delete(self.another_url, format='json', data=self.post_data)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
-    def test_allow_member_to_update_others_annotation_in_shared_project(self):
-        self.client.login(username=self.project_member_name,
-                          password=self.project_member_pass)
-        response = self.client.patch(self.shared_url, format='json', data=self.post_data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-    def test_allow_member_to_delete_others_annotation_in_shared_project(self):
-        self.client.login(username=self.project_member_name,
-                          password=self.project_member_pass)
-        response = self.client.delete(self.shared_url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     @classmethod
     def doCleanups(cls):
@@ -1212,11 +1195,11 @@ class TestUploader(APITestCase):
                                 file_format='csv',
                                 expected_status=status.HTTP_201_CREATED)
 
-    def test_can_upload_csv_file_does_not_match_column_and_row(self):
+    def test_cannot_upload_csv_file_does_not_match_column_and_row(self):
         self.upload_test_helper(project_id=self.classification_project.id,
-                                filename='example_column_and_row_not_matching.csv',
+                                filename='example.invalid.1.csv',
                                 file_format='csv',
-                                expected_status=status.HTTP_201_CREATED)
+                                expected_status=status.HTTP_400_BAD_REQUEST)
 
     def test_cannot_upload_csv_file_has_too_many_columns(self):
         self.upload_test_helper(project_id=self.classification_project.id,
@@ -1242,11 +1225,11 @@ class TestUploader(APITestCase):
                                 file_format='excel',
                                 expected_status=status.HTTP_201_CREATED)
 
-    def test_can_upload_excel_file_does_not_match_column_and_row(self):
+    def test_cannot_upload_excel_file_does_not_match_column_and_row(self):
         self.upload_test_helper(project_id=self.classification_project.id,
-                                filename='example_column_and_row_not_matching.xlsx',
+                                filename='example.invalid.1.xlsx',
                                 file_format='excel',
-                                expected_status=status.HTTP_201_CREATED)
+                                expected_status=status.HTTP_400_BAD_REQUEST)
 
     def test_cannot_upload_excel_file_has_too_many_columns(self):
         self.upload_test_helper(project_id=self.classification_project.id,
@@ -1419,10 +1402,10 @@ class TestParser(APITestCase):
                                parser=CoNLLParser())
 
     def test_give_classification_data_to_csv_parser(self):
-        self.parser_helper(filename='example.csv', parser=CSVParser(), include_label=False)
+        self.parser_helper(filename='example.csv', parser=CSVParser())
 
     def test_give_seq2seq_data_to_csv_parser(self):
-        self.parser_helper(filename='example.csv', parser=CSVParser(), include_label=False)
+        self.parser_helper(filename='example.csv', parser=CSVParser())
 
     def test_give_classification_data_to_json_parser(self):
         self.parser_helper(filename='classification.jsonl', parser=JSONParser())

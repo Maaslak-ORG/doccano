@@ -1,5 +1,5 @@
 from django.db.models import Count, Q
-from django_filters.rest_framework import FilterSet, BooleanFilter
+from django_filters.rest_framework import FilterSet, BooleanFilter, CharFilter
 
 from .models import Document
 
@@ -9,6 +9,7 @@ class DocumentFilter(FilterSet):
     doc_annotations__isnull = BooleanFilter(field_name='doc_annotations', method='filter_annotations')
     seq2seq_annotations__isnull = BooleanFilter(field_name='seq2seq_annotations', method='filter_annotations')
     speech2text_annotations__isnull = BooleanFilter(field_name='speech2text_annotations', method='filter_annotations')
+
 
     def filter_annotations(self, queryset, field_name, value):
         queryset = queryset.annotate(num_annotations=
@@ -29,3 +30,4 @@ class DocumentFilter(FilterSet):
                   'doc_annotations__label__id', 'seq_annotations__label__id',
                   'doc_annotations__isnull', 'seq_annotations__isnull', 'seq2seq_annotations__isnull',
                   'speech2text_annotations__isnull')
+

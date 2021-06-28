@@ -31,7 +31,7 @@
             <approve-button
               v-if="canViewApproveButton"
               :approved="approved"
-              :disabled="currentDoc ? false : true"
+              :disabled="!currentDoc"
             />
             <filter-button
               v-model="filterOption"
