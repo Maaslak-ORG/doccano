@@ -144,6 +144,7 @@ class ClassificationStorage(BaseStorage):
 
     @classmethod
     def extract_unique_labels(cls, labels):
+
         return set(itertools.chain(*labels))
 
     @classmethod
